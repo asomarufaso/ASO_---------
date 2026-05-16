@@ -2,10 +2,10 @@ import streamlit as st
 import pandas as pd
 import io
 
-# পেজ কনফিগারেশন (ওয়েবসাইটের নাম ও আইকন)
+# পেজ কনফিগারেশন
 st.set_page_config(page_title="Maruf Rent Generator", page_icon="🏠", layout="centered")
 
-# ==================== শেয়ারড ফাংশনসমূহ (Helper Functions) ====================
+# ==================== শেয়ারড ফাংশনসমূহ ====================
 def to_bangla_formatted(num, is_unit=False):
     if num is None:
         return ""
@@ -40,8 +40,43 @@ def month_to_bangla(month_text):
 def custom_round(num):
     return int(num) + 1 if num - int(num) >= 0.5 else int(num)
 
+# সংখ্যা থেকে বাংলায় কথায় লেখার ফাংশন (১ থেকে ৯৯,৯৯৯ পর্যন্ত পারফেক্ট কাজ করবে)
+def number_to_bangla_words(n):
+    if n <= 0:
+        return "শূন্য"
+    
+    words = {
+        0: '', 1: 'এক', 2: 'দুই', 3: 'তিন', 4: 'চার', 5: 'পাঁচ', 6: 'ছয়', 7: 'সাত', 8: 'আট', 9: 'নয়', 10: 'দশ',
+        11: 'এগারো', 12: 'বারো', 13: 'তেরো', 14: 'চৌদ্দ', 15: 'পনেরো', 16: 'ষোলো', 17: 'সতেরো', 18: 'আঠারো', 19: 'উনিশ', 20: 'বিশ',
+        21: 'একুশ', 22: 'বাইশ', 23: 'তেইশ', 24: 'চব্বিশ', 25: 'পঁচিশ', 26: 'ছাব্বিশ', 27: 'সাতাশ', 28: 'আটাশ', 29: 'উনত্রিশ', 30: 'ত্রিশ',
+        31: 'একত্রিশ', 32: 'বত্রিশ', 33: 'তেত্রিশ', 34: 'চৌত্রিশ', 35: 'পঁয়ত্রিশ', 36: 'ছত্রিশ', 37: 'সাতত্রিশ', 38: 'আটত্রিশ', 39: 'ঊনচল্লিশ', 40: 'চল্লিশ',
+        41: 'একচল্লিশ', 42: 'বিয়াল্লিশ', 43: 'তেতাল্লিশ', 44: 'চৌয়াল্লিশ', 45: 'পঁয়তাল্লিশ', 46: 'ছেচল্লিশ', 47: 'সাতচল্লিশ', 48: 'আটচল্লিশ', 49: 'ঊনপঞ্চাশ', 50: 'পঞ্চাশ',
+        51: 'একান্ন', 52: 'বায়ান্ন', 53: 'তিপ্পান্ন', 54: 'চৌয়ান্ন', 55: 'পঞ্চান্ন', 56: 'ছাপ্পান্ন', 57: 'সাতান্ন', 58: 'আটান্ন', 59: 'ঊনষাট', 60: 'ষাট',
+        61: 'একষট্টি', 62: 'বাষট্টি', 63: 'তেষট্টি', 64: 'চৌষট্টি', 65: 'পঁয়ষট্টি', 66: 'ছেষট্টি', 67: 'সাতষট্টি', 68: 'আটষট্টি', 69: 'ঊনসত্তর', 70: 'সত্তর',
+        71: 'একাত্তর', 72: 'বাহাত্তর', 73: 'তেয়াত্তর', 74: 'চৌয়াত্তর', 75: 'পঁচাত্তর', 76: 'ছিয়াত্তর', 77: 'সাতাত্তর', 78: 'আটাত্তর', 79: 'ঊনআশি', 80: 'আশি',
+        81: 'একাশি', 82: 'বিরাশি', 83: 'তিরাশি', 84: 'চৌরাশি', 85: 'পঁচাশি', 86: 'ছিয়াশি', 87: 'সাতাশি', 88: 'আটাশি', 89: 'ঊননব্বই', 90: 'নব্বই',
+        91: 'একানব্বই', 92: 'বিরানব্বই', 93: 'তিরানব্বই', 94: 'চৌরানব্বই', 95: 'পঁচানব্বই', 96: 'ছিয়ানব্বই', 97: 'সাতানব্বই', 98: 'আটানব্বই', 99: 'নিরানব্বই'
+    }
+    
+    res = ""
+    # হাজার হ্যান্ডেল করার জন্য
+    if n >= 1000:
+        thousand = n // 1000
+        res += words[thousand] + " হাজার "
+        n %= 1000
+    # শতক হ্যান্ডেল করার জন্য
+    if n >= 100:
+        hundred = n // 100
+        res += words[hundred] + " শত "
+        n %= 100
+    # দশক ও একক হ্যান্ডেল করার জন্য
+    if n > 0:
+        res += words[n]
+        
+    return res.strip() + " টাকা মাত্র।"
 
-# ==================== সাইডবার মেনু নেভিগেশন (আপনার চাহিদা অনুযায়ী ক্রমানুসারে) ====================
+
+# ==================== সাইডবার মেনু নেভিগেশন ====================
 st.sidebar.title("📱 মেনু নির্বাচন করুন")
 app_mode = st.sidebar.radio(
     "কোনটি তৈরি করতে চান?",
@@ -59,7 +94,6 @@ if app_mode == "📋 বাড়ি ভাড়ার বিবরণ (Bill No
     
     tab1, tab2 = st.tabs(["সিঙ্গেল ইনপুট (Manual)", "এক্সেল আপলোড (Bulk)"])
     
-    # নোটিশ জেনারেটর কোর ফাংশন
     def generate_receipt_text(flat_no, month_year, rent_amount, unit_consumed, per_unit_cost, water_bill, cleaning_bill, arrears, advance):
         try:
             rent = int(rent_amount)
@@ -75,6 +109,13 @@ if app_mode == "📋 বাড়ি ভাড়ার বিবরণ (Bill No
             
             flat_bn = to_bangla_formatted(flat_no).upper()
             month_bn = month_to_bangla(month_year)
+            in_words_bn = number_to_bangla_words(total_final)
+            
+            # বকেয়া থাকার ওপর ভিত্তি করে ডাইনামিক রিমাইন্ডার মেসেজ
+            if arr > 0:
+                reminder_msg = f"⚠️ বকেয়া নোটিশ: আপনার পূর্বের {to_bangla_formatted(arr)}৳ বকেয়াসহ চলতি মাসের বিলটি দ্রুত পরিশোধ করার জন্য অনুরোধ করা হলো।"
+            else:
+                reminder_msg = "📌 👉 নির্ধারিত সময়ের মধ্যে বিলটি পরিশোধ করার জন্য বিনীত অনুরোধ রইল।"
             
             return f"""🌟✨ ━━《 🏠 বাড়ি ভাড়ার বিবরণ 🏠 》━━ ✨🌟
 🏡 ফ্ল্যাট: {flat_bn}
@@ -86,13 +127,14 @@ if app_mode == "📋 বাড়ি ভাড়ার বিবরণ (Bill No
 ⚡ বৈদ্যুতিক বিল: {to_bangla_formatted(unit, is_unit=True)}×{to_bangla_formatted(rate)} = {to_bangla_formatted(electricity_total)}৳
 🚿 পানির বিল: {to_bangla_formatted(water)}৳
 🧹🗑 ক্লিনিং ও আবর্জনা বিল: {to_bangla_formatted(cleaning)}৳
-📌 বকেয়া: {to_bangla_formatted(arr)}৳
-💰 অগ্রিম: {to_bangla_formatted(adv)}৳
+📌 পূর্বের বকেয়া: {to_bangla_formatted(arr)}৳
+💰 অগ্রিম জমা: -{to_bangla_formatted(adv)}৳
 ━━━━━━━━━━━━━━━━━━━
 💵 মোট পরিশোধযোগ্য: ({to_bangla_formatted(rent)}+{to_bangla_formatted(electricity_total)}+{to_bangla_formatted(water)}+{to_bangla_formatted(cleaning)}+{to_bangla_formatted(arr)}-{to_bangla_formatted(adv)})
 🎯 সর্বমোট: {to_bangla_formatted(total_final)}✅
+✍️ কথায়: {in_words_bn}
 
-📌 👉 নির্ধারিত সময়ে বিলটি পরিশোধ করবেন
+{reminder_msg}
 
 🌟 শুভেচ্ছান্তে,
 💁‍♂️ মারুফ"""
@@ -109,7 +151,7 @@ if app_mode == "📋 বাড়ি ভাড়ার বিবরণ (Bill No
             rate = st.number_input("প্রতি ইউনিট রেট", value=102.77, step=0.1, key="notice_rate")
             water = st.number_input("পানির বিল", value=100, step=10, key="notice_water")
             cleaning = st.number_input("ক্লিনিং বিল", value=160, step=10, key="notice_clean")
-            arrears = st.number_input("বকেয়া", value=930, step=10, key="notice_arr")
+            arrears = st.number_input("বকেয়া (Arrears)", value=930, step=10, key="notice_arr")
             advance = st.number_input("নগদ অগ্রিম জমা", value=0, step=10, key="notice_adv")
             
         with col2:
@@ -144,8 +186,8 @@ if app_mode == "📋 বাড়ি ভাড়ার বিবরণ (Bill No
                 st.error(f"ফাইল প্রসেস করতে সমস্যা হয়েছে। কলামের নামগুলো ঠিক আছে কিনা নিশ্চিত করুন। এরর: {e}")
 
 
-# ==================== মোড ২: ভাড়ার রসিদ (Cash Memo) ====================
-elif app_mode == "💵 ভাড়ার রসিদ (Cash Memo)":
+# ==================== মোড ২: ভাড়ার রסיদ (Cash Memo) ====================
+elif app_mode == "💵 ভাড়ার রסיদ (Cash Memo)":
     st.title("🏡 ভাড়ার রসিদ জেনারেটর (টাকা জমার মেমো)")
     st.write("ভাড়াটিয়া টাকা পরিশোধ করার পর বকেয়া/অগ্রিম হিসাবের রসিদ তৈরি করুন।")
     
